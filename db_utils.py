@@ -1,9 +1,7 @@
-from matplotlib import pyplot
 from scipy import stats
 from scipy.stats import normaltest
 from sqlalchemy import create_engine
 from sqlalchemy import inspect
-from statsmodels.graphics.gofplots import qqplot
 
 import pandas as pd
 import seaborn as sns
@@ -13,7 +11,7 @@ import yaml
 
 class DataFrameInfo:
     """
-        Class containing functions which takes in a dataframe as input and performs various statistitcal enquiries on it.
+        Class containing functions which takes in a dataframe as input and performs various statistical enquiries on it.
     """
     
     def show_info(self,dataframe):
@@ -149,38 +147,46 @@ class RDSDatabaseConnector:
         inspector = inspect(engine)
         print(inspector.get_table_names())
     
-    def read_rds_table(self, table_name:str):
+    def read_rds_table(self, table_name:str, index_column):
         """
             Returns a pandas dataframe with name 'table_name' from self.init_db_engine()
         """
-        return pd.read_sql_table(table_name, self.init_db_engine())
+        return pd.read_sql_table(table_name, self.init_db_engine(), index_col=index_column)
     
-    def rds_table_to_csv(self, table_name:str, file_name:str = 'csv_of_dataframe.csv'):
+    def rds_table_to_csv(self, table_name:str, index_column, file_name:str = 'csv_of_dataframe.csv'):
         """
             Puts the resulting dataframe from 'read_rds_table' in a .csv file
         """
-        pd.read_sql_table(table_name, self.init_db_engine()).to_csv(file_name)
+        self.read_rds_table(table_name, index_column).to_csv(file_name)
 
 ###
 
 class Plotter:
     """
-    
+        Contains various functions which plot graphs
     """
     def show_correlation_plot(self, dataframe):
+        """
+            Plots a seaborn correlation heatmap of dataframe
+        """
         sns.heatmap(dataframe.corr(numeric_only=True), cmap='coolwarm')
     
     def show_histogram(self, dataframe_series, bin_number=20):
+        """
+            Takes in a dataframe series and plots a histogram
+        """
         dataframe_series.hist(bins=bin_number)
     
     def show_box_plot(self, dataframe_series):
+        """
+            Takes in a dataframe series and plots a boxplot
+        """
         sns.boxplot(y=dataframe_series, color='lightgreen', showfliers=True)
-        #sns.swarmplot(y=dataframe_series, color='black')
-    
-    def show_qq_plot(self, dataframe_series):
-        pass
 
     def show_scatter_plot(self, series_1, series_2):
+        """
+            Takes in two series and plots a scatter plot
+        """
         sns.scatterplot(x = series_1, y = series_2)
 
 
@@ -188,11 +194,17 @@ class Plotter:
 
 class DataFrameTransform:
     """
-
+        Transforms various data within a dataframe
     """
     
     def impute_median(self, dataframe_series):
+        """
+            Fills out missing values in a series with the median
+        """
         return dataframe_series.fillna(dataframe_series.median())
     
     def apply_box_cox(self, dataframe_series):
+        """
+            Applies the Box Cox transformation to dataframe_series to eliminate skew
+        """
         return pd.Series(stats.boxcox(dataframe_series)[0])
